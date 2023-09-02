@@ -3,12 +3,14 @@ package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVilla
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.controller.auth.RegisterRequest;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.EmptyDataBaseException;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.UserNotFoundException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.mysql.GameDTO;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.mysql.PlayerGameDTO;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.mysql.GameMySQL;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.mysql.PlayerMySQL;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.mysql.IGameRepositoryMySQL;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.mysql.IplayerRepositoryMySQL;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.GameDTO;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.PlayerGameDTO;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.GameMongoDB;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.PlayerMySQL;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.IGameRepositoryMongoDB;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.IplayerRepositoryMySQL;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.services.AuthenticationService;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.services.PlayerGamerServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,8 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
@@ -35,17 +35,18 @@ import static org.mockito.Mockito.never;
 public class ServiceSQLTest {
 
     @InjectMocks
-    private PlayerGamerServiceMySQLImpl underTestService;
-    @Mock private IplayerRepositoryMySQL playerRepositorySQL;
-    @Mock private IGameRepositoryMySQL gameRepositorySQL;
+    private PlayerGamerServiceImpl underTestService;
+    @Mock private IplayerRepositoryMySQL playerRepository;
+    @Mock private IGameRepositoryMongoDB gameRepository;
     @Mock private PasswordEncoder passwordEncoder;
-    @Mock AuthenticationMySQLService authenticationMySQLService;
+    @Mock
+    AuthenticationService authenticationMySQLService;
 
 
     private PlayerMySQL player1;
-    private GameMySQL game1;
-    private GameMySQL game2;
-    private List<GameMySQL> games ;
+    private GameMongoDB game1;
+    private GameMongoDB game2;
+    private List<GameMongoDB> games ;
     private List<PlayerMySQL> listPlayerMySQL;
     private RegisterRequest registerRequest;
 
@@ -53,8 +54,8 @@ public class ServiceSQLTest {
     public void setUp(){
         player1 = new PlayerMySQL(1, "Miquel");
 
-        game1 = new GameMySQL(1, player1);
-        game2 = new GameMySQL(2, player1);
+        game1 = new GameMongoDB(1, player1.getId());
+        game2 = new GameMongoDB(2, player1.getId());
         games = Arrays.asList(game1, game2);
 
         listPlayerMySQL = Arrays.asList(
@@ -69,7 +70,7 @@ public class ServiceSQLTest {
 
     @Test
     public void playerSQLService_findByID_ReturnPlayerDTO(){
-        Mockito.when(playerRepositorySQL.findById(1)).thenReturn(Optional.of(player1));
+        Mockito.when(playerRepository.findById(1)).thenReturn(Optional.of(player1));
 
         PlayerGameDTO playerReturned = underTestService.findPlayerDTOById(1);
 
@@ -79,7 +80,7 @@ public class ServiceSQLTest {
 
     @Test
     public void gameSQLService_finPlayerByPlayerId_ReturnException(){
-        Mockito.when(playerRepositorySQL.findById(anyInt()))
+        Mockito.when(playerRepository.findById(anyInt()))
                 .thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class, () -> {
@@ -89,7 +90,7 @@ public class ServiceSQLTest {
 
     @Test
     public void playerSQLService_getAllPlayerDTO_ReturnListPlayersDTO(){
-        Mockito.when(playerRepositorySQL.findAll()).thenReturn(listPlayerMySQL);
+        Mockito.when(playerRepository.findAll()).thenReturn(listPlayerMySQL);
 
         List<PlayerGameDTO> actualList = underTestService.getAllPlayersDTO();
 
@@ -100,7 +101,7 @@ public class ServiceSQLTest {
 
     @Test
     public void playerSQLService_getAllPlayerDTO_ReturnException(){
-        Mockito.when(playerRepositorySQL.findAll()).thenReturn(new ArrayList<PlayerMySQL>());
+        Mockito.when(playerRepository.findAll()).thenReturn(new ArrayList<PlayerMySQL>());
         assertThrows(EmptyDataBaseException.class, () -> {
             underTestService.getAllPlayersDTO();
         });
@@ -109,8 +110,8 @@ public class ServiceSQLTest {
 
     @Test
     public void gamesSQLService_findGamesByPlayerId_ReturnGameList(){
-        Mockito.when(playerRepositorySQL.existsById(1)).thenReturn(true);
-        Mockito.when(gameRepositorySQL.findByPlayerId(1)).thenReturn(games);
+        Mockito.when(playerRepository.existsById(1)).thenReturn(true);
+        Mockito.when(gameRepository.findByPlayerId(1)).thenReturn(games);
 
         underTestService.findGamesByPlayerId(1);
         Assertions.assertThat(games.size()).isEqualTo(2);
@@ -119,7 +120,7 @@ public class ServiceSQLTest {
 
     @Test
     public void gamesSQLService_findGamesByPlayerId_returnException(){
-        Mockito.when(playerRepositorySQL.existsById(anyInt())).thenReturn(false);
+        Mockito.when(playerRepository.existsById(anyInt())).thenReturn(false);
 
         assertThrows(UserNotFoundException.class, () ->
                 underTestService.findGamesByPlayerId(anyInt()));
@@ -128,8 +129,8 @@ public class ServiceSQLTest {
 
     @Test
     public void gameSQLService_saveGame_returnSavedGame(){
-        Mockito.when(playerRepositorySQL.findById(1)).thenReturn(Optional.of(player1));
-        Mockito.when(gameRepositorySQL.save(any(GameMySQL.class))).thenReturn(game1);
+        Mockito.when(playerRepository.findById(1)).thenReturn(Optional.of(player1));
+        Mockito.when(gameRepository.save(any(GameMongoDB.class))).thenReturn(game1);
 
         GameDTO actualGameDTO = underTestService.saveGame(1);
 
@@ -138,19 +139,19 @@ public class ServiceSQLTest {
 
     @Test
     public void gameSQLService_saveGame_returnUserNotFoundException(){
-        Mockito.when(playerRepositorySQL.findById(1))
+        Mockito.when(playerRepository.findById(1))
                 .thenThrow(UserNotFoundException.class);
 
         assertThrows(UserNotFoundException.class, () -> {
             underTestService.saveGame(1);
         });
 
-        Mockito.verify(gameRepositorySQL, never()).save(any());
+        Mockito.verify(gameRepository, never()).save(any());
     }
 
     @Test
     public void playerSQLService_getAllPlayerDTORanking_ReturnListPlayersDTO(){
-        Mockito.when(playerRepositorySQL.findAll()).thenReturn(listPlayerMySQL);
+        Mockito.when(playerRepository.findAll()).thenReturn(listPlayerMySQL);
 
         List<PlayerGameDTO> actualList = underTestService.getAllPlayersDTORanking();
 
@@ -159,7 +160,7 @@ public class ServiceSQLTest {
     }
     @Test
     public void playerSQLService_getAllPlayerDTORanking_ReturnException(){
-        Mockito.when(playerRepositorySQL.findAll()).thenReturn(new ArrayList<PlayerMySQL>());
+        Mockito.when(playerRepository.findAll()).thenReturn(new ArrayList<PlayerMySQL>());
 
         assertThrows(EmptyDataBaseException.class, () -> {
             underTestService.getAllPlayersDTORanking();
@@ -169,19 +170,19 @@ public class ServiceSQLTest {
 
     @Test
     public void gameSQLService_deleteGameByPlayerId_ReturnListGameDTO(){
-        Mockito.when(playerRepositorySQL.findById(1)).thenReturn(Optional.of(player1));
-        Mockito.when(gameRepositorySQL.deleteByPlayerId(1)).thenReturn(games);
+        Mockito.when(playerRepository.findById(1)).thenReturn(Optional.of(player1));
+        Mockito.when(gameRepository.deleteByPlayerId(1)).thenReturn(games);
 
         // Delete games
         List<GameDTO> deletedGames = underTestService.deleteGamesByPlayerId(1);
 
         // Verify
         Assertions.assertThat(deletedGames.size()).isEqualTo(2);
-        Mockito.verify(gameRepositorySQL, Mockito.times(1)).deleteByPlayerId(1);
+        Mockito.verify(gameRepository, Mockito.times(1)).deleteByPlayerId(1);
     }
     @Test
     public void gameSQLService_deleteGamesByPlayerId_returnException(){
-        Mockito.when(playerRepositorySQL.findById(anyInt())).thenReturn(Optional.empty());
+        Mockito.when(playerRepository.findById(anyInt())).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class,
                 ()-> underTestService.deleteGamesByPlayerId(anyInt()));
@@ -190,7 +191,7 @@ public class ServiceSQLTest {
 
     @Test
     public void playerSQLService_GetWorstPlayer_ReturnPlayerGameDTO(){
-        Mockito.when(playerRepositorySQL.findAll()).thenReturn(listPlayerMySQL);
+        Mockito.when(playerRepository.findAll()).thenReturn(listPlayerMySQL);
 
         PlayerGameDTO player = underTestService.getWorstPlayer();
 
@@ -201,7 +202,7 @@ public class ServiceSQLTest {
 
     @Test
     public void playerSQLService_GetBestPlayer_ReturnPlayerGameDTO(){
-        Mockito.when(playerRepositorySQL.findAll()).thenReturn(listPlayerMySQL);
+        Mockito.when(playerRepository.findAll()).thenReturn(listPlayerMySQL);
 
         PlayerGameDTO player = underTestService.getBestPlayer();
 
@@ -212,7 +213,7 @@ public class ServiceSQLTest {
 
     @Test
     public void playerSQL_getAverageTotalMarks_returnDouble(){
-        Mockito.when(playerRepositorySQL.findAll()).thenReturn(listPlayerMySQL);
+        Mockito.when(playerRepository.findAll()).thenReturn(listPlayerMySQL);
 
         Double doubleValue = underTestService.averageTotalMarks();
 
@@ -221,7 +222,7 @@ public class ServiceSQLTest {
 
     @Test
     public void playerSQL_getAverageTotalMarks_returnEmptyDBException(){
-        Mockito.when(playerRepositorySQL.findAll())
+        Mockito.when(playerRepository.findAll())
                 .thenThrow(EmptyDataBaseException.class);
 
         assertThrows(EmptyDataBaseException.class,
@@ -231,7 +232,7 @@ public class ServiceSQLTest {
 
     @Test
     public void playerSQLService_updatePlayer_ReturnUpdatedPlayer(){
-        Mockito.when(playerRepositorySQL.findByEmail(anyString())).thenReturn(Optional.of(player1));
+        Mockito.when(playerRepository.findByEmail(anyString())).thenReturn(Optional.of(player1));
         Mockito.when(passwordEncoder.encode(anyString())).thenReturn(anyString());
 
         PlayerGameDTO updatedPlayer = underTestService.updatePlayer(registerRequest, "email");

@@ -1,10 +1,10 @@
-package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.controller.mongodb;
+package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.controller;
 
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.controller.auth.RegisterRequest;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.*;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.mongodb.GameDTOMongoDB;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.mongodb.PlayerGameDTOMongoDB;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.services.mongodb.PlayerGamerServiceMongoDBImpl;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.GameDTO;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.PlayerGameDTO;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.services.PlayerGamerServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,18 +23,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.OptionalDouble;
 
 @Slf4j
-@Tag(name = "IT-Academy - MongoDB", description = "MongoDB Controller methods to deal with the Game")
+@Tag(name = "IT-Academy - MySQL", description = "MySQL Controller methods to deal with the Game")
 @RestController
-@RequestMapping("playersMongoDB")
-public class DiceControllerMongoDB {
+@RequestMapping("players")
+public class DiceController {
     //http://localhost:9005/swagger-ui/index.html
 
     @Autowired
-    private PlayerGamerServiceMongoDBImpl PGService;
+    private PlayerGamerServiceImpl PGService;
 
 
 
@@ -49,35 +47,39 @@ public class DiceControllerMongoDB {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTOMongoDB.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "400",
                             description = "Bad request buddy",
-                            content = @Content)
+                            content = @Content),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            content = @Content
+                    )
             },
             security = {@SecurityRequirement(name = "Bearer Authentication")}
     )
     @PutMapping("/{id}")
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
-    public ResponseEntity<?> updatePlayer(
-            @RequestBody RegisterRequest playerModified,
-            @PathVariable String id
-    ){
+    public ResponseEntity<?> updatePlayer(@PathVariable int id, @RequestBody RegisterRequest request){
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
         String username = userDetails.getUsername();
         log.info(username);
 
         try{
-            PlayerGameDTOMongoDB updatedDTO = PGService.updatePlayer(playerModified, username);
+            PlayerGameDTO updatedDTO = PGService.updatePlayer(request, username);
             return new ResponseEntity<>(updatedDTO, HttpStatus.OK);
+
         }catch (UserNotFoundException | DuplicateUserNameException | DuplicateUserEmailException e){
             throw e;
         }catch (Exception e){
             return new ResponseEntity<>( HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     /**
      *  🟢POST un jugador/a específic realitza una tirada dels daus.
@@ -88,13 +90,13 @@ public class DiceControllerMongoDB {
             description = "Description: This method is to play a round",
             parameters = @Parameter(
                     name = "id",
-                    description = "Play the game by PlayerID",
+                    description = "PLay the game by PlayerID",
                     required = true),
             responses = {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = GameDTOMongoDB.class),
+                            content = @Content(schema = @Schema(implementation = GameDTO.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "404",
@@ -103,15 +105,21 @@ public class DiceControllerMongoDB {
                     @ApiResponse(
                             responseCode = "400",
                             description = "Bad request buddy",
-                            content = @Content)
+                            content = @Content),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            content = @Content
+                    )
             },
             security = {@SecurityRequirement(name = "Bearer Authentication")}
     )
     @PostMapping("/{id}/games")
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
-    public ResponseEntity<?> playGame(@PathVariable String id){
+    //This Annotation allows only the authorised user to use this method or an Admin user
+    public ResponseEntity<?> playGame(@PathVariable int id){
         try{
-            GameDTOMongoDB gameDTO = PGService.saveGame(id);
+            GameDTO gameDTO = PGService.saveGame(id);
             return new ResponseEntity<>(gameDTO, HttpStatus.OK);
         }catch (UserNotFoundException e){
             throw e;
@@ -126,18 +134,23 @@ public class DiceControllerMongoDB {
      *  @see <a href="http://localhost:9005/players"> 🔗http://localhost:9005/players</a>
      */
     @Operation(
-            summary = "Get all players | Authorized: Admin and all User",
+            summary = "Get all players and their average mark | Authorized: Admin and all User",
             description = "Description: This method retrieve all the player with their average mark",
             responses = {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTOMongoDB.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "204",
                             description = BaseDescriptionException.EMPTY_DATABASE,
                             content = @Content),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            content = @Content
+                    ),
                     @ApiResponse(
                             responseCode = "500",
                             description = "Internal error",
@@ -149,7 +162,8 @@ public class DiceControllerMongoDB {
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getAllPlayers(){
         try{
-            List<PlayerGameDTOMongoDB> returnList = PGService.getAllPlayersDTO();
+            List<PlayerGameDTO> returnList = PGService.getAllPlayersDTO();
+            log.info("Controller - get All Players");
             return new ResponseEntity<>(returnList, HttpStatus.OK);
         }catch (EmptyDataBaseException e){
             throw e;
@@ -173,7 +187,7 @@ public class DiceControllerMongoDB {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = GameDTOMongoDB.class), mediaType = "application/json")),
+                            content = @Content(schema = @Schema(implementation = GameDTO.class), mediaType = "application/json")),
                     @ApiResponse(
                             responseCode = "404",
                             description = BaseDescriptionException.NO_USER_BY_THIS_ID,
@@ -181,15 +195,20 @@ public class DiceControllerMongoDB {
                     @ApiResponse(
                             responseCode = "400",
                             description = "Bad request buddy",
-                            content = @Content)
+                            content = @Content),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            content = @Content
+                    )
             },
             security = {@SecurityRequirement(name = "Bearer Authentication")}
     )
     @GetMapping("/{id}")
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
-    public ResponseEntity<?> getGamePlayers(@PathVariable String id){
+    public ResponseEntity<?> getGamePlayer(@PathVariable int id){
         try{
-            List<GameDTOMongoDB> returnList =  PGService.findGamesByPlayerId(id);
+            List<GameDTO> returnList =  PGService.findGamesByPlayerId(id);
             return new ResponseEntity<>(returnList, HttpStatus.OK);
         } catch (UserNotFoundException e){
             throw e;
@@ -197,6 +216,7 @@ public class DiceControllerMongoDB {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     /**
      *  🔴DELETE Elimina les tirades del jugador/a.
@@ -212,21 +232,26 @@ public class DiceControllerMongoDB {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTOMongoDB.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "400",
                             description = "Bad request buddy",
-                            content = @Content)
+                            content = @Content),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            content = @Content
+                    )
             },
             security = {@SecurityRequirement(name = "Bearer Authentication")}
     )
     @DeleteMapping("/{id}/games")
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
-    public ResponseEntity<?> deletePlayerGames(@PathVariable String id){
+    public ResponseEntity<?> deletePlayerGames(@PathVariable int id){
         try{
-            PlayerGameDTOMongoDB player = PGService.findPlayerDTOById(id).get();
             PGService.deleteGamesByPlayerId(id);
+            PlayerGameDTO player = PGService.findPlayerDTOById(id);
             return new ResponseEntity<>(player, HttpStatus.OK);
         }catch (UserNotFoundException e){
             throw e;
@@ -234,6 +259,7 @@ public class DiceControllerMongoDB {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     /**
      *  🔵 GET Retorna el ranking mig de tots els jugadors/es del sistema. És a dir, el  percentatge mitjà d’èxits.
@@ -253,7 +279,7 @@ public class DiceControllerMongoDB {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTOMongoDB.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "204",
@@ -264,18 +290,22 @@ public class DiceControllerMongoDB {
                             description = "Bad request buddy",
                             content = @Content),
                     @ApiResponse(
+                            responseCode = "403",
+                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            content = @Content
+                    ),
+                    @ApiResponse(
                             responseCode = "500",
                             description = BaseDescriptionException.E500_INTERNAL_ERROR,
                             content = @Content)
             },
             security = {@SecurityRequirement(name = "Bearer Authentication")}
-
     )
     @GetMapping("/ranking")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getRankingPlayers(){
         try{
-            List<PlayerGameDTOMongoDB> returnList = PGService.getAllPlayersDTORanking();
+            List<PlayerGameDTO> returnList = PGService.getAllPlayersDTORanking();
             return new ResponseEntity<>(returnList, HttpStatus.OK);
         }catch (EmptyDataBaseException e){
             throw e;
@@ -296,12 +326,17 @@ public class DiceControllerMongoDB {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTOMongoDB.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "404",
                             description = BaseDescriptionException.EMPTY_DATABASE,
                             content = @Content),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            content = @Content
+                    ),
                     @ApiResponse(
                             responseCode = "500",
                             description = BaseDescriptionException.E500_INTERNAL_ERROR,
@@ -313,11 +348,11 @@ public class DiceControllerMongoDB {
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getWorstPlayer(){
         try{
-            Optional<PlayerGameDTOMongoDB> player = PGService.getWorstPlayer();
+            PlayerGameDTO player = PGService.getWorstPlayer();
             return new ResponseEntity<>(player, HttpStatus.OK);
         }catch (EmptyDataBaseException e){
             throw e;
-        }catch (RuntimeException e){
+        }catch (Exception e){
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -334,12 +369,17 @@ public class DiceControllerMongoDB {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTOMongoDB.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "404",
                             description = BaseDescriptionException.EMPTY_DATABASE,
                             content = @Content),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            content = @Content
+                    ),
                     @ApiResponse(
                             responseCode = "500",
                             description = BaseDescriptionException.E500_INTERNAL_ERROR,
@@ -351,27 +391,31 @@ public class DiceControllerMongoDB {
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getBestPlayer(){
         try{
-            Optional<PlayerGameDTOMongoDB> player =  PGService.getBestPlayer();
+            PlayerGameDTO player =  PGService.getBestPlayer();
             return new ResponseEntity<>(player, HttpStatus.OK);
         }catch (EmptyDataBaseException e){
             throw e;
-        }catch (RuntimeException e){
+        }catch (Exception e){
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Operation(
-            summary = "Average success all players | Authorized: Admin",
+            summary = "Average success mark from all players | Authorized: Admin",
             description = "Description: This method retrieve the average mark of success from all player",
             responses = {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema())
-                    ),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "204",
                             description = BaseDescriptionException.EMPTY_DATABASE,
+                            content = @Content),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = BaseDescriptionException.E403_DESCRIPTION,
                             content = @Content),
                     @ApiResponse(
                             responseCode = "500",
@@ -383,11 +427,13 @@ public class DiceControllerMongoDB {
     @GetMapping("/totalAverageMark")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> getAverageTotalMark(){
-        OptionalDouble averageMark = PGService.averageTotalMarks();
-        if(averageMark.isPresent()){
-            Double result = Math.round(averageMark.getAsDouble() * 100.00) / 100.00;
+        Double averageMark = PGService.averageTotalMarks();
+        try{
+            Double result = Math.round(averageMark * 100.00) / 100.00;
             return new ResponseEntity<>(result, HttpStatus.OK);
-        }else{
+        }catch (EmptyDataBaseException e){
+            throw e;
+        }catch (Exception e){
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

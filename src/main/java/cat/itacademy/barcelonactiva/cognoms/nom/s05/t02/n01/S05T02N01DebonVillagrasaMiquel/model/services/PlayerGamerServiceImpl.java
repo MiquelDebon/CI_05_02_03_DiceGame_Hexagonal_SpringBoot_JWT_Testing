@@ -1,16 +1,15 @@
-package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.services.mysql;
+package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.services;
 
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.controller.auth.RegisterRequest;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.services.LogicGame;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.BaseDescriptionException;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.EmptyDataBaseException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.mysql.GameDTO;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.mysql.PlayerGameDTO;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.mysql.GameMySQL;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.mysql.PlayerMySQL;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.GameDTO;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.PlayerGameDTO;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.GameMongoDB;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.PlayerMySQL;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.UserNotFoundException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.mysql.IplayerRepositoryMySQL;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.mysql.IGameRepositoryMySQL;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.IGameRepositoryMongoDB;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.IplayerRepositoryMySQL;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,16 +20,14 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class PlayerGamerServiceMySQLImpl implements IPlayerGamerServiceMySQL {
-
-    //TODO Add success rate to Player to not calculate it each time
+public class PlayerGamerServiceImpl implements IPlayerGameService {
 
     @Autowired
-    private IGameRepositoryMySQL gameRepository;
+    private IGameRepositoryMongoDB gameRepository;
     @Autowired
     private IplayerRepositoryMySQL playerRepositorySQL;
     @Autowired
-    private AuthenticationMySQLService authenticationMySQLService;
+    private AuthenticationService authenticationMySQLService;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -44,7 +41,7 @@ public class PlayerGamerServiceMySQLImpl implements IPlayerGamerServiceMySQL {
     public PlayerGameDTO playerDTOfromPlayer(PlayerMySQL player){
         return new PlayerGameDTO(player.getId(), player.getName(), player.getAverageMark(), (player.getSuccessRate() + " %"));
     }
-    public GameDTO gameDTOfromGame(GameMySQL game){
+    public GameDTO gameDTOfromGame(GameMongoDB game){
         return new GameDTO(game.getMark());
     }
 
@@ -103,7 +100,6 @@ public class PlayerGamerServiceMySQLImpl implements IPlayerGamerServiceMySQL {
 
         playerRepositorySQL.save(newPlayer);
         return this.playerDTOfromPlayer(newPlayer);
-
     }
 
     @Override
@@ -131,27 +127,24 @@ public class PlayerGamerServiceMySQLImpl implements IPlayerGamerServiceMySQL {
 
     @Override
     public GameDTO saveGame(int playerId){
-        int result = LogicGame.PLAY();
         PlayerMySQL player = playerRepositorySQL.findById(playerId).
                 orElseThrow(() -> new UserNotFoundException(BaseDescriptionException.NO_USER_BY_THIS_ID));
+        int result = LogicGame.PLAY();
 
-        GameMySQL savedGame = gameRepository.save(new GameMySQL(result, player));
+        GameMongoDB savedGame = gameRepository.save(new GameMongoDB(result, playerId));
         playerRepositorySQL.save(player.autoSetNewGamesRates(result));
         return gameDTOfromGame(savedGame);
     }
 
     @Override
     public List<GameDTO> deleteGamesByPlayerId(int id){
-        Optional<PlayerMySQL> player = playerRepositorySQL.findById(id);
-        if(player.isPresent()){
-            player.get().resetAllGamesRate();
-            return gameRepository.deleteByPlayerId(id).stream()
-                    .map(this::gameDTOfromGame)
-                    .collect(Collectors.toList());
-        }else{
-            log.error(BaseDescriptionException.NO_USER_BY_THIS_ID);
-            throw new UserNotFoundException(BaseDescriptionException.NO_USER_BY_THIS_ID);
-        }
+        PlayerMySQL player = playerRepositorySQL.findById(id).
+                orElseThrow(() -> new UserNotFoundException(BaseDescriptionException.NO_USER_BY_THIS_ID));
+
+        player.resetAllGamesRate();
+        return gameRepository.deleteByPlayerId(id).stream()
+                .map(this::gameDTOfromGame)
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -1,8 +1,9 @@
-package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.mysql;
+package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity;
 
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,14 +34,23 @@ public class PlayerMySQL implements UserDetails {
     //Unique except "Anonymous" using Backend not SQL
     @Column(nullable = false)
     @Schema(defaultValue = "PlayerName", description = "Here goes the player's name")
-    @Size(min = 3, max = 20)
+    @NotBlank(message = "Name is mandatory")
+    @Size(min = 2, max = 20)
     private String name;
+
+    @NotBlank(message = "Surname is mandatory")
+    @Size(min = 2, max = 20)
+    private String surname;
 
     @Column(nullable = false)
     private String registerDate;
 
-    private String surname;
+    @Column(nullable = false)
+    @NotBlank(message = "Email is mandatory")
     private String email;
+
+    @Column(nullable = false)
+    @NotBlank(message = "Password is mandatory")
     private String password;
 
     private int amountOfGames = 0;
@@ -49,6 +59,7 @@ public class PlayerMySQL implements UserDetails {
     private double successRate = 0;
     private int sumMark = 0;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
     private Role role;
 
@@ -57,7 +68,6 @@ public class PlayerMySQL implements UserDetails {
         registerDate = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss")
                 .format(new java.util.Date());
     }
-
 
     public PlayerMySQL(Integer id, String name){
         this.id = id;
