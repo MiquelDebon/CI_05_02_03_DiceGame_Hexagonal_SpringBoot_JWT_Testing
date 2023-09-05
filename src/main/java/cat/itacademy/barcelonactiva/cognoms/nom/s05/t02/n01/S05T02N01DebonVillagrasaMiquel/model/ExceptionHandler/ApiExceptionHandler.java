@@ -61,11 +61,9 @@ public class ApiExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> notValid(MethodArgumentNotValidException ex, HttpServletRequest request) {
         List<String> errors = new ArrayList<>();
-
         ex.getAllErrors().forEach(err -> errors.add(err.getDefaultMessage()));
-
         Map<String, List<String>> result = new HashMap<>();
-        result.put("ErrorMessages: ", errors);
+        result.put("Register error messages: ", errors);
 
         return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
     }

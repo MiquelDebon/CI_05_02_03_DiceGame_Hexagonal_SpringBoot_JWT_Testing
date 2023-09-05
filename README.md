@@ -68,8 +68,8 @@ Validation
 
 <table>
    <tr>
-      <td><p>Repository Game SQL</p></td>
-      <td><p>Repository Player SQL</p></td>
+      <td><p>Repository Game</p></td>
+      <td><p>Repository Player</p></td>
    </tr>
    <tr>
       <td> 
@@ -80,7 +80,7 @@ Validation
       </td>
    </tr>
     <tr>
-      <td><p>Dice Game Services SQL </p></td>
+      <td><p>Dice Game Services </p></td>
       <td><p>-</p></td>
    </tr>
     <tr>
@@ -94,8 +94,8 @@ Validation
 
   </tr>
     <tr>
-      <td><p>Controller Dice Game SQL </p></td>
-      <td><p>Controller Authoritzation SQL</p></td>
+      <td><p>Controller Dice Game</p></td>
+      <td><p>Controller Authoritzation</p></td>
    </tr>
     <tr>
       <td> 
@@ -105,6 +105,24 @@ Validation
       <img src="src/main/resources/imagesTest/authControllerSQLTest.png">
       </td>
    </tr>
+
+  </tr>
+    <tr>
+      <td><p>Integration Test </p></td>
+      <td><p></p></td>
+   </tr>
+    <tr>
+      <td> 
+      <img src="src/main/resources/imagesTest/IntegrationTest.png" />
+      </td>
+      <td>
+      <img src="">
+      </td>
+   </tr>
+
+    
+
+
  
 
 </table>
