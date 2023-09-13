@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -63,21 +64,9 @@ public class DiceController {
     )
     @PutMapping("/{id}")
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
-    public ResponseEntity<?> updatePlayer(@PathVariable int id, @RequestBody RegisterRequest request){
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
-        String username = userDetails.getUsername();
-        log.info(username);
-
-        try{
-            PlayerGameDTO updatedDTO = PGService.updatePlayer(request, username);
-            return new ResponseEntity<>(updatedDTO, HttpStatus.OK);
-
-        }catch (UserNotFoundException | DuplicateUserNameException | DuplicateUserEmailException e){
-            throw e;
-        }catch (Exception e){
-            return new ResponseEntity<>( HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<?> updatePlayer(@PathVariable int id, @Valid @RequestBody RegisterRequest requestUpdatedUser){
+        PlayerGameDTO updatedDTO = PGService.updatePlayer(requestUpdatedUser, id);
+        return new ResponseEntity<>(updatedDTO, HttpStatus.OK);
     }
 
 
@@ -118,14 +107,8 @@ public class DiceController {
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
     //This Annotation allows only the authorised user to use this method or an Admin user
     public ResponseEntity<?> playGame(@PathVariable int id){
-        try{
-            GameDTO gameDTO = PGService.saveGame(id);
-            return new ResponseEntity<>(gameDTO, HttpStatus.OK);
-        }catch (UserNotFoundException e){
-            throw e;
-        }catch (Exception e){
-            return new ResponseEntity<>( HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        GameDTO gameDTO = PGService.saveGame(id);
+        return new ResponseEntity<>(gameDTO, HttpStatus.OK);
     }
 
 
@@ -161,15 +144,8 @@ public class DiceController {
     @GetMapping()
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getAllPlayers(){
-        try{
-            List<PlayerGameDTO> returnList = PGService.getAllPlayersDTO();
-            log.info("Controller - get All Players");
-            return new ResponseEntity<>(returnList, HttpStatus.OK);
-        }catch (EmptyDataBaseException e){
-            throw e;
-        }catch (RuntimeException e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<PlayerGameDTO> returnList = PGService.getAllPlayersDTO();
+        return new ResponseEntity<>(returnList, HttpStatus.OK);
     }
 
 
@@ -207,14 +183,8 @@ public class DiceController {
     @GetMapping("/{id}")
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
     public ResponseEntity<?> getGamePlayer(@PathVariable int id){
-        try{
-            List<GameDTO> returnList =  PGService.findGamesByPlayerId(id);
-            return new ResponseEntity<>(returnList, HttpStatus.OK);
-        } catch (UserNotFoundException e){
-            throw e;
-        } catch (Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<GameDTO> returnList =  PGService.findGamesByPlayerId(id);
+        return new ResponseEntity<>(returnList, HttpStatus.OK);
     }
 
 
@@ -249,15 +219,9 @@ public class DiceController {
     @DeleteMapping("/{id}/games")
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
     public ResponseEntity<?> deletePlayerGames(@PathVariable int id){
-        try{
-            PGService.deleteGamesByPlayerId(id);
-            PlayerGameDTO player = PGService.findPlayerDTOById(id);
-            return new ResponseEntity<>(player, HttpStatus.OK);
-        }catch (UserNotFoundException e){
-            throw e;
-        }catch (Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        PGService.deleteGamesByPlayerId(id);
+        PlayerGameDTO player = PGService.findPlayerDTOById(id);
+        return new ResponseEntity<>(player, HttpStatus.OK);
     }
 
 
@@ -304,14 +268,8 @@ public class DiceController {
     @GetMapping("/ranking")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getRankingPlayers(){
-        try{
-            List<PlayerGameDTO> returnList = PGService.getAllPlayersDTORanking();
-            return new ResponseEntity<>(returnList, HttpStatus.OK);
-        }catch (EmptyDataBaseException e){
-            throw e;
-        }catch (Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<PlayerGameDTO> returnList = PGService.getAllPlayersDTORanking();
+        return new ResponseEntity<>(returnList, HttpStatus.OK);
     }
 
 
@@ -347,14 +305,8 @@ public class DiceController {
     @GetMapping("/ranking/loser")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getWorstPlayer(){
-        try{
-            PlayerGameDTO player = PGService.getWorstPlayer();
-            return new ResponseEntity<>(player, HttpStatus.OK);
-        }catch (EmptyDataBaseException e){
-            throw e;
-        }catch (Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        PlayerGameDTO player = PGService.getWorstPlayer();
+        return new ResponseEntity<>(player, HttpStatus.OK);
     }
 
 
@@ -390,14 +342,8 @@ public class DiceController {
     @GetMapping("/ranking/winner")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getBestPlayer(){
-        try{
-            PlayerGameDTO player =  PGService.getBestPlayer();
-            return new ResponseEntity<>(player, HttpStatus.OK);
-        }catch (EmptyDataBaseException e){
-            throw e;
-        }catch (Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        PlayerGameDTO player =  PGService.getBestPlayer();
+        return new ResponseEntity<>(player, HttpStatus.OK);
     }
 
     @Operation(
@@ -428,14 +374,8 @@ public class DiceController {
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> getAverageTotalMark(){
         Double averageMark = PGService.averageTotalMarks();
-        try{
-            Double result = Math.round(averageMark * 100.00) / 100.00;
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        }catch (EmptyDataBaseException e){
-            throw e;
-        }catch (Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        Double result = Math.round(averageMark * 100.00) / 100.00;
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
 

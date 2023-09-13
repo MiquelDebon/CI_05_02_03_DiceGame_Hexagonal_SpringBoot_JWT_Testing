@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class MessageException {
+public class ErrorObject {
     private int statusCode;
     private LocalDateTime date;
     private String description;

@@ -3,11 +3,12 @@ package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVilla
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.controller.DiceController;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.controller.auth.RegisterRequest;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.ApiExceptionHandler;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.EmptyDataBaseException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.UserNotFoundException;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.customExceptions.EmptyDataBaseException;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.customExceptions.UserNotFoundException;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.GameDTO;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.PlayerGameDTO;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.PlayerMySQL;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.Role;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.services.PlayerGamerServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 public class DiceGameControllerSQLTest {
 
-    //We need to fake HTTP requests. So we will autowire a MockMvc bean which Spring Boot autoconfigures.
+    //We need to fake HTTP requests. So we will auto-wire a MockMvc bean which Spring Boot autoconfigures.
     @Autowired
     private MockMvc mockMvc;
     @InjectMocks
@@ -61,7 +62,15 @@ public class DiceGameControllerSQLTest {
                 .build();
         objectMapper = new ObjectMapper();
 
-        player = PlayerMySQL.builder().id(1).name("Miquel").build();
+        player = PlayerMySQL.builder()
+                .id(1)
+                .name("Miquel")
+                .surname("Debon")
+                .role(Role.USER)
+                .email("mdebonbcn@gmail.com")
+                .password("Debon123Gts+")
+                .registerDate(new Date().toString())
+                .build();
         playerGameDTO = PlayerGameDTO.builder().id(1).name("Miquel").averageMark(2).build();
         gameDTO = new GameDTO(3);
         listPlayerGameDTO = Arrays.asList(
@@ -73,7 +82,7 @@ public class DiceGameControllerSQLTest {
                 new GameDTO(2),
                 new GameDTO(3));
 
-        registerRequest = new RegisterRequest("Miquel", "Debon", "mdebonbcn@gmail.com", "password");
+        registerRequest = new RegisterRequest("Miquel", "Debon", "mdebonbcn@gmail.com", "passworD123+");
     }
 
 
@@ -228,14 +237,11 @@ public class DiceGameControllerSQLTest {
 
 
     @Test
-    @Disabled
     public void diceController_updatePlayer_returnUpdatedPlayerDTO() throws Exception{
-        given(SecurityContextHolder.getContext().getAuthentication().getPrincipal()).willReturn(userDetails);
-
-        given(service.updatePlayer(registerRequest, registerRequest.getEmail())).willReturn(playerGameDTO);
+        given(service.updatePlayer(registerRequest, player.getId())).willReturn(playerGameDTO);
         mockMvc.perform(put("/players/{id}", player.getId(), registerRequest)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(playerGameDTO)))
+                        .content(objectMapper.writeValueAsBytes(registerRequest)))
 
                 .andExpect(status().isOk());
     }

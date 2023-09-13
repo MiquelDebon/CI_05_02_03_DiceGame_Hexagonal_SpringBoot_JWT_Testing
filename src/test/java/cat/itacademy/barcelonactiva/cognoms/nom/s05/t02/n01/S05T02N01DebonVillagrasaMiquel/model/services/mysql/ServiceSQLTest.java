@@ -1,12 +1,13 @@
 package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.services.mysql;
 
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.controller.auth.RegisterRequest;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.EmptyDataBaseException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.UserNotFoundException;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.customExceptions.EmptyDataBaseException;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.customExceptions.UserNotFoundException;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.GameDTO;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.dto.PlayerGameDTO;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.GameMongoDB;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.PlayerMySQL;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.Role;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.IGameRepositoryMongoDB;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.IplayerRepositoryMySQL;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.services.AuthenticationService;
@@ -52,7 +53,15 @@ public class ServiceSQLTest {
 
     @BeforeEach
     public void setUp(){
-        player1 = new PlayerMySQL(1, "Miquel");
+        player1 = PlayerMySQL.builder()
+                .id(1)
+                .name("Miquel")
+                .surname("Debon")
+                .role(Role.USER)
+                .email("mdebonbcn@gmail.com")
+                .password("Debon123Gts+")
+                .registerDate(new Date().toString())
+                .build();
 
         game1 = new GameMongoDB(1, player1.getId());
         game2 = new GameMongoDB(2, player1.getId());
@@ -63,8 +72,8 @@ public class ServiceSQLTest {
                 new PlayerMySQL(2, "Marta"),
                 new PlayerMySQL(3, "Jorge"));
 
-        registerRequest = new RegisterRequest("Miquel", "Debon",
-                "mdebonbcn@gmail.com", "password");
+        registerRequest = new RegisterRequest("Marta", "Debon",
+                "mdebonbcn@gmail.com", "passwordD123+");
     }
 
 
@@ -232,12 +241,13 @@ public class ServiceSQLTest {
 
     @Test
     public void playerSQLService_updatePlayer_ReturnUpdatedPlayer(){
-        Mockito.when(playerRepository.findByEmail(anyString())).thenReturn(Optional.of(player1));
+        int idPlayer = 1;
+        Mockito.when(playerRepository.findById(anyInt())).thenReturn(Optional.of(player1));
         Mockito.when(passwordEncoder.encode(anyString())).thenReturn(anyString());
 
-        PlayerGameDTO updatedPlayer = underTestService.updatePlayer(registerRequest, "email");
+        PlayerGameDTO updatedPlayer = underTestService.updatePlayer(registerRequest, idPlayer);
 
-        Assertions.assertThat(updatedPlayer.getName()).isEqualTo("Miquel");
+        Assertions.assertThat(updatedPlayer.getName()).isEqualTo("Marta");
     }
 
 

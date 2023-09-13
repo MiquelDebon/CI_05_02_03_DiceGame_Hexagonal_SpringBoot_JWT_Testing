@@ -48,10 +48,10 @@ public class AuthenticationControllerSQLTest {
                 .firstname("miquel")
                 .lastname("debon")
                 .email("miquel.debon@gmail.com")
-                .password("password").build();
+                .password("passwordD123+").build();
         loginRequest = LoginRequest.builder()
                 .email("miquel.debon@gmail.com")
-                .password("password").build();
+                .password("passwordD123+").build();
         authenticationResponse = AuthenticationResponse.builder()
                 .token("token").build();
     }

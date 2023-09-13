@@ -47,11 +47,7 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponse> register(
             @Valid @RequestBody RegisterRequest request
     ){
-        try{
-            return ResponseEntity.ok(service.register(request));
-        }catch (Exception e){
-            throw e;
-        }
+        return ResponseEntity.ok(service.register(request));
     }
 
 

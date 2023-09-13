@@ -2,7 +2,6 @@ package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVilla
 
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.Role;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.PlayerMySQL;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.IplayerRepositoryMySQL;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,23 +29,38 @@ public class RepositorySQLPlayerTest {
     @Autowired
     private IplayerRepositoryMySQL playerMySQLRepository;
 
-    private PlayerMySQL playerMySQL_AllArguments;
+    private PlayerMySQL playerMySQL0;
     private PlayerMySQL playerMySQL1;
     private PlayerMySQL playerMySQL2;
 
     @BeforeEach
     public void setUp(){
-        playerMySQL_AllArguments = PlayerMySQL.builder()
+        playerMySQL0 = PlayerMySQL.builder()
                 .name("Miquel")
                 .surname("Debon")
                 .role(Role.USER)
                 .email("mdebonbcn@gmail.com")
-                .password("mimi")
+                .password("Debon123Gts+")
                 .registerDate(new Date().toString())
                 .build();
 
-        playerMySQL1 = new PlayerMySQL("Miquel");
-        playerMySQL2 = new PlayerMySQL("Marta");
+        playerMySQL1 = PlayerMySQL.builder()
+                .name("Marta")
+                .surname("Villagrasa")
+                .role(Role.USER)
+                .email("martaVillagrasa@gmail.com")
+                .password("Debon123Gts+")
+                .registerDate(new Date().toString())
+                .build();
+
+        playerMySQL2 = PlayerMySQL.builder()
+                .name("Jorge")
+                .surname("Debon")
+                .role(Role.USER)
+                .email("jorgedebon@gmail.com")
+                .password("Debon123Gts+")
+                .registerDate(new Date().toString())
+                .build();;
     }
 
 
@@ -120,8 +134,8 @@ public class RepositorySQLPlayerTest {
     @Test
     public void playerMySQLRepo_findByEmail_ReturnPlayer(){
         //Static Player
-        playerMySQLRepository.save(playerMySQL_AllArguments);
-        Optional<PlayerMySQL> optional = playerMySQLRepository.findByEmail(playerMySQL_AllArguments.getEmail());
+        playerMySQLRepository.save(playerMySQL0);
+        Optional<PlayerMySQL> optional = playerMySQLRepository.findByEmail(playerMySQL0.getEmail());
 
         Assertions.assertThat(optional).isNotEmpty();
         Assertions.assertThat(optional.get().getName()).isEqualTo("Miquel");
@@ -139,9 +153,9 @@ public class RepositorySQLPlayerTest {
 
     @Test
     public void playerMySQLRepo_ExistByEmail_ReturnBoolean(){
-        playerMySQLRepository.save(playerMySQL_AllArguments);
+        playerMySQLRepository.save(playerMySQL0);
 
-        Boolean result = playerMySQLRepository.existsByEmail(playerMySQL_AllArguments.getEmail());
+        Boolean result = playerMySQLRepository.existsByEmail(playerMySQL0.getEmail());
 
         Assertions.assertThat(result).isTrue();
     }
