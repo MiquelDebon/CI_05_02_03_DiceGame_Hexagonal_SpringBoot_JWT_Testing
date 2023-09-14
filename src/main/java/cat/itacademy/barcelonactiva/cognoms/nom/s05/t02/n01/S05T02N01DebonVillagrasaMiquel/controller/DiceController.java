@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Slf4j
-@Tag(name = "IT-Academy - MySQL", description = "MySQL Controller methods to deal with the Game")
+@Tag(name = "IT-Academy", description = "Controller methods to deal with the Game")
 @RestController
 @RequestMapping("players")
 public class DiceController {

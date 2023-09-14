@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
-@Tag(name = "IT-Academy - Authentication MySQL")
+@Tag(name = "IT-Academy - Authentication")
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("api/mysql/auth")

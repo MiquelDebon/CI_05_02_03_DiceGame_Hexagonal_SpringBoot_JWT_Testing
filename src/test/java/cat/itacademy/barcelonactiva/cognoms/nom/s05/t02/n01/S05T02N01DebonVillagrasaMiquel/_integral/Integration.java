@@ -71,7 +71,6 @@ public class Integration {
     @DisplayName("Test Register but the JSON is invalid then return BadRequest")
     @Test
     public void testRegisterReturnBadRequest()throws Exception {
-
         mockMvc.perform(MockMvcRequestBuilders.post("/api/mysql/auth/register")
                         .content("{\"email\":\"silviagarcia@admin.com\",\"password\":\"passwordSil45+\"}")
                         .contentType(MediaType.APPLICATION_JSON)
