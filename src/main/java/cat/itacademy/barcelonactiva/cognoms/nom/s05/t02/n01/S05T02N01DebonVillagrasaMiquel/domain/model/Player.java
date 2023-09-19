@@ -1,24 +1,12 @@
-package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity;
+package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.List;
 
+@Builder
 @Data
-
 public class Player{
     private Integer id;
     private String name;
@@ -48,6 +36,20 @@ public class Player{
                 .format(new java.util.Date());
     }
 
+    public Player(Integer id, String name, String surname, String registerDate, String email, String password, int amountOfGames, int wonGames, double averageMark, double successRate, int sumMark, Role role) {
+        this.id = id;
+        this.name = name;
+        this.surname = surname;
+        this.registerDate = registerDate;
+        this.email = email;
+        this.password = password;
+        this.amountOfGames = amountOfGames;
+        this.wonGames = wonGames;
+        this.averageMark = averageMark;
+        this.successRate = successRate;
+        this.sumMark = sumMark;
+        this.role = role;
+    }
 
     public void addAmountGames(){
         amountOfGames++;

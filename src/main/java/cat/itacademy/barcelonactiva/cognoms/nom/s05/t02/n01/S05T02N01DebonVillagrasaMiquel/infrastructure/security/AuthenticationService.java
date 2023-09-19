@@ -1,53 +1,45 @@
-package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.services;
+package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.security;
 
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.controller.auth.LoginRequest;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.controller.auth.AuthenticationResponse;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.controller.auth.RegisterRequest;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.customExceptions.DuplicateUserEmailException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.customExceptions.DuplicateUserNameException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.customExceptions.UserNotFoundException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.PlayerMySQL;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.Role;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.IplayerRepositoryMySQL;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.security.config.JwtService;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.request.LoginRequest;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Player;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.ports.out.PlayerRepositoryPort;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.response.AuthenticationResponse;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.request.RegisterRequest;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.customExceptions.DuplicateUserEmailException;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.customExceptions.DuplicateUserNameException;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.customExceptions.UserNotFoundException;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
 
-@Service
 @RequiredArgsConstructor
-public class AuthenticationService {
+public class AuthenticationService{
 
-    private final IplayerRepositoryMySQL repository;
+    private final PlayerRepositoryPort repository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final IplayerRepositoryMySQL playerRepository;
 
 
-    public AuthenticationResponse register(RegisterRequest request){
+    public Player register(RegisterRequest request){
         checkDuplicatedEmail(request.getEmail());
         checkDuplicatedName(request.getFirstname());
 
-        PlayerMySQL user;
+        //Just for fun if you register with an admin email you are an admin ROLE
+        Player user;
         if(!request.getEmail().contains("@admin.com")){
             user = buildPlayer(request, Role.USER);
-            repository.save(user);
         }else{
             user = buildPlayer(request, Role.ADMIN);
         }
         repository.save(user);
 
-        var jwtToken = jwtService.generateToken(user);
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .build();
+        return user;
     }
-
 
     public AuthenticationResponse authenticate (LoginRequest request){
         try{
@@ -70,8 +62,8 @@ public class AuthenticationService {
      * Support methods
      */
 
-    public PlayerMySQL buildPlayer(RegisterRequest request, Role role){
-        return PlayerMySQL.builder()
+    public Player buildPlayer(RegisterRequest request, Role role){
+        return Player.builder()
                 .name(request.getFirstname())
                 .surname(request.getLastname())
                 .email(request.getEmail())
@@ -83,8 +75,8 @@ public class AuthenticationService {
     }
 
     public void checkDuplicatedEmail(String email){
-        if(playerRepository.findAll()
-                .stream().map(PlayerMySQL::getEmail)
+        if(repository.findAll()
+                .stream().map(Player::getEmail)
                 .anyMatch((n)-> n.equalsIgnoreCase(email))
         ){
             throw new DuplicateUserEmailException("Duplicated Email");
@@ -95,8 +87,8 @@ public class AuthenticationService {
         if (
             !name.equalsIgnoreCase("ANONYMOUS")
             &&
-            playerRepository.findAll()
-                    .stream().map(PlayerMySQL::getName)
+            repository.findAll()
+                    .stream().map(Player::getName)
                     .anyMatch((n)-> n.equalsIgnoreCase(name))
         ){
             throw new DuplicateUserNameException("Duplicated name");

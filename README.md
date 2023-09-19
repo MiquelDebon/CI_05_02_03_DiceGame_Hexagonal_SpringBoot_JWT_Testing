@@ -23,7 +23,6 @@ The software must respect the main design patterns.
 **URL's** 
 
     MYSQL:    /players
-    MongoDB   /playersMongoDB
 
     - POST:   /players                -> Create a player.
     - PUT     /players                -> change the name of the player.

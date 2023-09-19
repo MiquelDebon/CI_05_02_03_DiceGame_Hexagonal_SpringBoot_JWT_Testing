@@ -1,5 +1,7 @@
-package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity;
+package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.entity;
 
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Player;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -118,28 +120,29 @@ public class PlayerMySQL implements UserDetails {
         wonGames++;
     }
 
-    public PlayerMySQL autoSetNewGamesRates(int newGameMark){
-        this.addAmountGames();
-        this.setSumMark(this.sumMark + newGameMark);
-        if(newGameMark > 7) this.addWonGames();
 
-        double newSuccessRate = (double) Math.round(((double) this.wonGames / this.amountOfGames) * 10000) /100;
-        this.setSuccessRate(newSuccessRate);
+    public Player toDomainModel(){
+        return new Player(id, name, surname, email, password, registerDate, amountOfGames, wonGames, averageMark, successRate, sumMark, role);
+    }
+    public static PlayerMySQL fromDomainModel(Player player){
+        return PlayerMySQL.builder()
+                .id(player.getId())
+                .name(player.getName())
+                .surname(player.getSurname())
+                .email(player.getEmail())
+                .password(player.getPassword())
+                .registerDate(player.getRegisterDate())
 
-        double newAverageMark =
-                (double) Math.round(((double)(sumMark)/amountOfGames)
-                        *100.00)/100.00;
-        this.setAverageMark(newAverageMark);
-        return this;
+                .amountOfGames(player.getAmountOfGames())
+                .wonGames(player.getWonGames())
+                .averageMark(player.getAverageMark())
+                .successRate(player.getSuccessRate())
+                .sumMark(player.getSumMark())
+                .role(player.getRole())
+                .build();
     }
 
-    public void resetAllGamesRate(){
-        this.setAmountOfGames(0);
-        this.setWonGames(0);
-        this.setAverageMark(0);
-        this.setSuccessRate(0);
-        this.setSumMark(0);
-    }
+
 
 
 }

@@ -1,66 +1,52 @@
 package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.services;
 
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.controller.auth.RegisterRequest;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.LogicGame;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.customExceptions.EmptyDataBaseException;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.customExceptions.UserNotFoundException;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.request.RegisterRequest;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Game;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Player;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.ports.out.GameRepositoryPort;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.ports.in.PlayerGameUsesCasesPort;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.ports.out.PlayerRepositoryPort;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.ExceptionHandler.BaseDescriptionException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.ExceptionHandler.customExceptions.EmptyDataBaseException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.dto.GameDTO;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.dto.PlayerGameDTO;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.GameMongoDB;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.PlayerMySQL;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.ExceptionHandler.customExceptions.UserNotFoundException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.IGameRepositoryMongoDB;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository.IplayerRepositoryMySQL;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.security.AuthenticationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Service
-public class PlayerGamerServiceImpl implements IPlayerGameService {
+public class PlayerGamerService implements PlayerGameUsesCasesPort {
 
-    @Autowired
-    private IGameRepositoryMongoDB gameRepository;
-    @Autowired
-    private IplayerRepositoryMySQL playerRepositorySQL;
-    @Autowired
+    private GameRepositoryPort gameRepository;
+    private PlayerRepositoryPort playerRepository;
+
     private AuthenticationService authenticationMySQLService;
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
-
-    /**
-     *
-     * 🔁 ----------  MAPPERS -----------
-     *
-     */
-
-    public PlayerGameDTO playerDTOfromPlayer(PlayerMySQL player){
-        return new PlayerGameDTO(player.getId(), player.getName(), player.getAverageMark(), (player.getSuccessRate() + " %"));
-    }
-    public GameDTO gameDTOfromGame(GameMongoDB game){
-        return new GameDTO(game.getMark());
+    @Autowired
+    public PlayerGamerService(
+            GameRepositoryPort gameRepository,
+            PlayerRepositoryPort playerRepository,
+            AuthenticationService authenticationMySQLService,
+            PasswordEncoder passwordEncoder) {
+        this.gameRepository = gameRepository;
+        this.playerRepository = playerRepository;
+        this.authenticationMySQLService = authenticationMySQLService;
+        this.passwordEncoder = passwordEncoder;
     }
 
-
-    /**
-     *
-     *  ℹ️    ------- METHODS ----------------
-     *
-     */
 
 
     @Override
-    public List<PlayerGameDTO> getAllPlayersDTO(){
+    public List<Player> getAllPlayers(){
 
-        List<PlayerMySQL> playerMySQLList = playerRepositorySQL.findAll();
-        if(playerMySQLList.size() > 0){
-            return playerMySQLList.stream()
-                    .map(p -> this.playerDTOfromPlayer(p))
-                    .collect(Collectors.toList());
+        List<Player> playerList = playerRepository.findAll();
+        if(playerList.size() > 0){
+            return playerList;
         }else{
             log.error(BaseDescriptionException.EMPTY_DATABASE);
             throw new EmptyDataBaseException();
@@ -69,12 +55,12 @@ public class PlayerGamerServiceImpl implements IPlayerGameService {
     }
 
     @Override
-    public List<PlayerGameDTO> getAllPlayersDTORanking(){
-        List<PlayerMySQL> playerMySQLList = playerRepositorySQL.findAll();
-        if(playerMySQLList.size() > 0){
-            return playerMySQLList.stream()
-                    .sorted(Comparator.comparing(PlayerMySQL::getSuccessRate).reversed())
-                    .map(p -> this.playerDTOfromPlayer(p))
+    public List<Player> getAllPlayersRanking(){
+        List<Player> playerList = playerRepository.findAll();
+        if(playerList.size() > 0){
+            return playerList.stream()
+                    .sorted(Comparator.comparing(Player::getSuccessRate)
+                    .reversed())
                     .collect(Collectors.toList());
         }else{
             log.error(BaseDescriptionException.EMPTY_DATABASE);
@@ -83,9 +69,9 @@ public class PlayerGamerServiceImpl implements IPlayerGameService {
     }
 
     @Override
-    public PlayerGameDTO updatePlayer(RegisterRequest updatedPlayer, int id){
+    public Player updatePlayer(RegisterRequest updatedPlayer, int id){
 
-        PlayerMySQL player = playerRepositorySQL.findById(id)
+        Player player = playerRepository.findById(id)
                 .orElseThrow(UserNotFoundException::new);
 
         //Check the new name is not duplicated
@@ -94,7 +80,7 @@ public class PlayerGamerServiceImpl implements IPlayerGameService {
         if(!currentName.equalsIgnoreCase(updatedName)){
             authenticationMySQLService.checkDuplicatedName(updatedPlayer.getFirstname());
             player.setName(updatedPlayer.getFirstname());
-            playerRepositorySQL.save(player);
+            playerRepository.save(player);
         }
 
         //Check the new email is not duplicated
@@ -103,23 +89,23 @@ public class PlayerGamerServiceImpl implements IPlayerGameService {
         if(!currentEmail.equalsIgnoreCase(updatedEmail)){
             authenticationMySQLService.checkDuplicatedEmail(updatedPlayer.getEmail());
             player.setEmail(updatedPlayer.getEmail());
-            playerRepositorySQL.save(player);
+            playerRepository.save(player);
             log.warn("Log out and log in again, otherwise the token will fail because the username won't match");
         }
 
         //Set the new values
         player.setSurname(updatedPlayer.getLastname());
         player.setPassword(passwordEncoder.encode(updatedPlayer.getPassword()));
-        playerRepositorySQL.save(player);
+        playerRepository.save(player);
 
-        return this.playerDTOfromPlayer(player);
+        return player;
     }
 
     @Override
-    public PlayerGameDTO findPlayerDTOById(int id){
-        Optional<PlayerMySQL> player = playerRepositorySQL.findById(id);
+    public Player findPlayerById(int id){
+        Optional<Player> player = playerRepository.findById(id);
         if(player.isPresent()){
-            return this.playerDTOfromPlayer(player.get());
+            return player.get();
         }else{
             log.error(BaseDescriptionException.NO_USER_BY_THIS_ID);
             throw new UserNotFoundException(BaseDescriptionException.NO_USER_BY_THIS_ID);
@@ -127,10 +113,9 @@ public class PlayerGamerServiceImpl implements IPlayerGameService {
     }
 
     @Override
-    public List<GameDTO> findGamesByPlayerId(int id){
-        if(playerRepositorySQL.existsById(id)){
+    public List<Game> findGamesByPlayerId(int id){
+        if(playerRepository.existsById(id)){
             return gameRepository.findByPlayerId(id).stream()
-                    .map(this::gameDTOfromGame)
                     .collect(Collectors.toList());
         }else{
             log.error(BaseDescriptionException.NO_USER_BY_THIS_ID);
@@ -139,44 +124,43 @@ public class PlayerGamerServiceImpl implements IPlayerGameService {
     }
 
     @Override
-    public GameDTO saveGame(int playerId){
-        PlayerMySQL player = playerRepositorySQL.findById(playerId).
+    public Game saveGame(int playerId){
+        Player player = playerRepository.findById(playerId).
                 orElseThrow(() -> new UserNotFoundException(BaseDescriptionException.NO_USER_BY_THIS_ID));
         int result = LogicGame.PLAY();
 
-        GameMongoDB savedGame = gameRepository.save(new GameMongoDB(result, playerId));
-        playerRepositorySQL.save(player.autoSetNewGamesRates(result));
-        return gameDTOfromGame(savedGame);
+        Game savedGame = gameRepository.save(new Game(result, playerId));
+        playerRepository.save(player.autoSetNewGamesRates(result));
+        return savedGame;
     }
 
     @Override
-    public List<GameDTO> deleteGamesByPlayerId(int id){
-        PlayerMySQL player = playerRepositorySQL.findById(id).
+    public List<Game> deleteGamesByPlayerId(int id){
+        Player player = playerRepository.findById(id).
                 orElseThrow(() -> new UserNotFoundException());
 
         player.resetAllGamesRate();
         return gameRepository.deleteByPlayerId(id).stream()
-                .map(this::gameDTOfromGame)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public PlayerGameDTO getWorstPlayer(){
-        List<PlayerGameDTO> playersList = this.getAllPlayersDTORanking();
+    public Player getWorstPlayer(){
+        List<Player> playersList = this.getAllPlayersRanking();
         return playersList.get(playersList.size()-1);
     }
 
     @Override
-    public PlayerGameDTO getBestPlayer(){
-        List<PlayerGameDTO> playersList = this.getAllPlayersDTORanking();
+    public Player getBestPlayer(){
+        List<Player> playersList = this.getAllPlayersRanking();
         return playersList.get(0);
     }
 
 
     @Override
     public Double averageTotalMarks(){
-        return this.getAllPlayersDTO().stream()
-                .mapToDouble(PlayerGameDTO::getAverageMark)
+        return this.getAllPlayers().stream()
+                .mapToDouble(Player::getAverageMark)
                 .average().getAsDouble();
     }
 

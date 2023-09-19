@@ -1,5 +1,6 @@
-package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity;
+package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.entity;
 
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Game;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -31,4 +32,14 @@ public class GameMongoDB {
         this.mark = mark;
         this.playerId = player_id;
     }
+
+
+    public Game toDomainModel(){
+        return new Game(id, mark, playerId);
+    }
+    public static GameMongoDB fromDomainModel(Game game){
+        return new GameMongoDB(game.getId(), game.getMark(), game.getPlayerId());
+    }
+
+
 }

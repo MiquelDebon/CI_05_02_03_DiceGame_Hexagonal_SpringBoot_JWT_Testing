@@ -1,49 +1,45 @@
 //package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.repository;
 //
-//import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.S05T02N01DebonVillagrasaMiquelApplication;
-//import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.entity.GameMongoDB;
-//import com.mongodb.BasicDBObjectBuilder;
-//import com.mongodb.DBObject;
-//import lombok.extern.slf4j.Slf4j;
+//import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Game;
+//import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.entity.GameMongoDB;
+//import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.repository.jpaMongoDb.JpaGameRepositoryMongoDB;
+//import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.repository.jpaMongoDb.JpaGameRepositoryMongoDBAdapter;
 //import org.assertj.core.api.Assertions;
-//import org.junit.After;
-//import org.junit.jupiter.api.AfterEach;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.DisplayName;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
+//import org.junit.Test;
 //import org.junit.runner.RunWith;
+//import org.mockito.InjectMocks;
+//import org.mockito.Mock;
+//import org.mockito.junit.MockitoJUnitRunner;
 //import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
-//import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-//import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-//import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-//import org.springframework.boot.test.context.SpringBootTest;
-//import org.springframework.data.mongodb.core.MongoTemplate;
-//import org.springframework.test.annotation.DirtiesContext;
-//import org.springframework.test.context.ContextConfiguration;
-//import org.springframework.test.context.junit.jupiter.SpringExtension;
-//import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-//import org.springframework.test.context.junit4.SpringRunner;
-//import org.springframework.test.web.servlet.MockMvc;
 //
+//import java.util.Arrays;
 //import java.util.List;
+//
+//import static org.mockito.ArgumentMatchers.any;
+//import static org.mockito.Mockito.when;
 //
 ////@DataMongoTest
 ////@RunWith(SpringJunit5Runner.class)
 ////@RunWith(SpringRunner.class)
-//@DataMongoTest
-//public class RepositoryGameMongoDB {
-//    @Autowired
-//    private IGameRepositoryMongoDB gameMongoDBRepository;
+////@ExtendWith(MockitoExtension.class)
+////@DataMongoTest
+//@RunWith(MockitoJUnitRunner.class)
+//public class RepositoryGameMongoDbTest {
+//    @InjectMocks
+//    private JpaGameRepositoryMongoDBAdapter underTestGameRepository;
+//    @Mock
+//    private JpaGameRepositoryMongoDB gameMongoDBRepositoryMock;
 //
 //
 ////    @Autowired
 ////    MongoTemplate mongoTemplate;
 //
-//    private GameMongoDB gameMongoDB1 = new GameMongoDB(3,100);
-//    private GameMongoDB gameMongoDB2 = new GameMongoDB(3,100);;
-//    private GameMongoDB gameMongoDB3 = new GameMongoDB(2,2);;
+//    private final Game game1 = new Game("001",3,100);
+//    private final GameMongoDB gameM1 = new GameMongoDB("001",3,100);
+//    private final Game game2 = new Game("002",3,100);
+//    private final GameMongoDB gameM2 = new GameMongoDB("002",3,100);
+//
+//    private final Game game3= new Game("003",2,102);
 //
 ////    @BeforeEach
 ////    public void setUp(){
@@ -59,17 +55,18 @@
 ////    }
 //
 //    @Test
-//    @DirtiesContext
 //    public void testFindByPlayerId() {
 //        // Given
-//        int playerId = 120;
-//        GameMongoDB game1 = new GameMongoDB(3, playerId);
-//        GameMongoDB game2 = new GameMongoDB(3, playerId);
-//        gameMongoDBRepository.save(game1);
-//        gameMongoDBRepository.save(game2);
+//        int playerId = 100;
+//        List<Game> expectedList = Arrays.asList(game1, game2);
+//        when(GameMongoDB.fromDomainModel(game1)).thenReturn(gameM1);
+//        when(GameMongoDB.fromDomainModel(game2)).thenReturn(gameM2);
+//        when(any(GameMongoDB.class).toDomainModel()).thenReturn(any(Game.class));
+//
+//        when(underTestGameRepository.findByPlayerId(playerId)).thenReturn(expectedList);
 //
 //        // When
-//        List<GameMongoDB> games = gameMongoDBRepository.findByPlayerId(playerId);
+//        List<Game> games = underTestGameRepository.findByPlayerId(playerId);
 //
 //        // Then
 //        Assertions.assertThat(games).hasSize(2);

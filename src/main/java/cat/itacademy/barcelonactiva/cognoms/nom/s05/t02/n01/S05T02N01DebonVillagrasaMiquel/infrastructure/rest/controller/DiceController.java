@@ -1,10 +1,12 @@
-package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.controller;
+package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.rest.controller;
 
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Game;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Player;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.ExceptionHandler.BaseDescriptionException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.services.request.RegisterRequest;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.model.ExceptionHandler.*;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.services.response.GameDTO;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.services.response.PlayerGameDTO;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.request.RegisterRequest;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.rest.mapperDto.MapperDto;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.response.GameDTO;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.response.PlayerGameDTO;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.services.PlayerGamerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,6 +25,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Tag(name = "IT-Academy", description = "Controller methods to deal with the Game")
@@ -64,7 +67,9 @@ public class DiceController {
     @PutMapping("/{id}")
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
     public ResponseEntity<?> updatePlayer(@PathVariable int id, @Valid @RequestBody RegisterRequest requestUpdatedUser){
-        PlayerGameDTO updatedDTO = PGService.updatePlayer(requestUpdatedUser, id);
+        Player updatedPlayer = PGService.updatePlayer(requestUpdatedUser, id);
+
+        PlayerGameDTO updatedDTO = MapperDto.playerDTOfromPlayer(updatedPlayer);
         return new ResponseEntity<>(updatedDTO, HttpStatus.OK);
     }
 
@@ -106,7 +111,9 @@ public class DiceController {
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
     //This Annotation allows only the authorised user to use this method or an Admin user
     public ResponseEntity<?> playGame(@PathVariable int id){
-        GameDTO gameDTO = PGService.saveGame(id);
+        Game game = PGService.saveGame(id);
+
+        GameDTO gameDTO = MapperDto.gameDTOfromGame(game);
         return new ResponseEntity<>(gameDTO, HttpStatus.OK);
     }
 
@@ -143,8 +150,13 @@ public class DiceController {
     @GetMapping()
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getAllPlayers(){
-        List<PlayerGameDTO> returnList = PGService.getAllPlayersDTO();
-        return new ResponseEntity<>(returnList, HttpStatus.OK);
+        List<Player> returnList = PGService.getAllPlayers();
+
+        List<PlayerGameDTO> returnListDto = returnList.stream()
+                .map(MapperDto::playerDTOfromPlayer)
+                .collect(Collectors.toList());
+
+        return new ResponseEntity<>(returnListDto, HttpStatus.OK);
     }
 
 
@@ -182,8 +194,13 @@ public class DiceController {
     @GetMapping("/{id}")
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
     public ResponseEntity<?> getGamePlayer(@PathVariable int id){
-        List<GameDTO> returnList =  PGService.findGamesByPlayerId(id);
-        return new ResponseEntity<>(returnList, HttpStatus.OK);
+        List<Game> returnList =  PGService.findGamesByPlayerId(id);
+
+        List<GameDTO> returnListDto = returnList.stream()
+                .map(MapperDto::gameDTOfromGame)
+                .collect(Collectors.toList());
+
+        return new ResponseEntity<>(returnListDto, HttpStatus.OK);
     }
 
 
@@ -219,8 +236,10 @@ public class DiceController {
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
     public ResponseEntity<?> deletePlayerGames(@PathVariable int id){
         PGService.deleteGamesByPlayerId(id);
-        PlayerGameDTO player = PGService.findPlayerDTOById(id);
-        return new ResponseEntity<>(player, HttpStatus.OK);
+        Player player = PGService.findPlayerById(id);
+
+        PlayerGameDTO playerGameDTO = MapperDto.playerDTOfromPlayer(player);
+        return new ResponseEntity<>(playerGameDTO, HttpStatus.OK);
     }
 
 
@@ -267,8 +286,13 @@ public class DiceController {
     @GetMapping("/ranking")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getRankingPlayers(){
-        List<PlayerGameDTO> returnList = PGService.getAllPlayersDTORanking();
-        return new ResponseEntity<>(returnList, HttpStatus.OK);
+        List<Player> returnList = PGService.getAllPlayersRanking();
+
+        List<PlayerGameDTO> playerGameDTOS = returnList.stream()
+                .map(MapperDto::playerDTOfromPlayer)
+                .collect(Collectors.toList());
+
+        return new ResponseEntity<>(playerGameDTOS, HttpStatus.OK);
     }
 
 
@@ -304,8 +328,11 @@ public class DiceController {
     @GetMapping("/ranking/loser")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getWorstPlayer(){
-        PlayerGameDTO player = PGService.getWorstPlayer();
-        return new ResponseEntity<>(player, HttpStatus.OK);
+        Player player = PGService.getWorstPlayer();
+
+        PlayerGameDTO playerGameDTO = MapperDto.playerDTOfromPlayer(player);
+
+        return new ResponseEntity<>(playerGameDTO, HttpStatus.OK);
     }
 
 
@@ -341,8 +368,10 @@ public class DiceController {
     @GetMapping("/ranking/winner")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getBestPlayer(){
-        PlayerGameDTO player =  PGService.getBestPlayer();
-        return new ResponseEntity<>(player, HttpStatus.OK);
+        Player player =  PGService.getBestPlayer();
+
+        PlayerGameDTO playerGameDTO = MapperDto.playerDTOfromPlayer(player);
+        return new ResponseEntity<>(playerGameDTO, HttpStatus.OK);
     }
 
     @Operation(
