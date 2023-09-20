@@ -18,7 +18,7 @@ import java.util.function.Function;
 
 
 @Service
-public class JwtService implements IJwtService{
+public class JwtService{
 
     @Value("${miquel.app.jwtSecret_KEY}")
     private String SECRET_KEY;
@@ -35,9 +35,6 @@ public class JwtService implements IJwtService{
 
     public String generateToken(UserDetails userDetails){
         return generateToken(new HashMap<>(), userDetails);
-    }
-    public String generateToken(Player player){
-        return generateToken((UserDetails) player );
     }
 
     private Key  getSignInKey(){

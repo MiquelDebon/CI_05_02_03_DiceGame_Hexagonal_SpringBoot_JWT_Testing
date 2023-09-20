@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -31,6 +32,7 @@ public class ApiExceptionHandler {
                 request.getDescription(false));
         return new ResponseEntity<>(message, HttpStatus.NOT_FOUND);
     }
+
 
     @ExceptionHandler(DuplicateUserNameException.class)
     public ResponseEntity<?> duplicatedName(DuplicateUserNameException ex){

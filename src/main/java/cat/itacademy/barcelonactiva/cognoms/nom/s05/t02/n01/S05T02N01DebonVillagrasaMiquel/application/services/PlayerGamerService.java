@@ -3,7 +3,10 @@ package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVilla
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.LogicGame;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.customExceptions.EmptyDataBaseException;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.customExceptions.UserNotFoundException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.request.RegisterRequest;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.dto.GameDto;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.dto.PlayerGameDto;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.mapperDto.MapperDto;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.request.RegisterRequest;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Game;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Player;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.ports.out.GameRepositoryPort;
@@ -42,11 +45,13 @@ public class PlayerGamerService implements PlayerGameUsesCasesPort {
 
 
     @Override
-    public List<Player> getAllPlayers(){
+    public List<PlayerGameDto> getAllPlayers(){
 
         List<Player> playerList = playerRepository.findAll();
         if(playerList.size() > 0){
-            return playerList;
+            return playerList.stream()
+                    .map(MapperDto::playerDTOfromPlayer)
+                    .collect(Collectors.toList());
         }else{
             log.error(BaseDescriptionException.EMPTY_DATABASE);
             throw new EmptyDataBaseException();
@@ -55,12 +60,13 @@ public class PlayerGamerService implements PlayerGameUsesCasesPort {
     }
 
     @Override
-    public List<Player> getAllPlayersRanking(){
+    public List<PlayerGameDto> getAllPlayersRanking(){
         List<Player> playerList = playerRepository.findAll();
         if(playerList.size() > 0){
             return playerList.stream()
                     .sorted(Comparator.comparing(Player::getSuccessRate)
                     .reversed())
+                    .map(MapperDto::playerDTOfromPlayer)
                     .collect(Collectors.toList());
         }else{
             log.error(BaseDescriptionException.EMPTY_DATABASE);
@@ -69,7 +75,7 @@ public class PlayerGamerService implements PlayerGameUsesCasesPort {
     }
 
     @Override
-    public Player updatePlayer(RegisterRequest updatedPlayer, int id){
+    public PlayerGameDto updatePlayer(RegisterRequest updatedPlayer, int id){
 
         Player player = playerRepository.findById(id)
                 .orElseThrow(UserNotFoundException::new);
@@ -98,14 +104,14 @@ public class PlayerGamerService implements PlayerGameUsesCasesPort {
         player.setPassword(passwordEncoder.encode(updatedPlayer.getPassword()));
         playerRepository.save(player);
 
-        return player;
+        return MapperDto.playerDTOfromPlayer(player);
     }
 
     @Override
-    public Player findPlayerById(int id){
-        Optional<Player> player = playerRepository.findById(id);
-        if(player.isPresent()){
-            return player.get();
+    public PlayerGameDto findPlayerById(int id){
+        Optional<Player> optionalPlayer = playerRepository.findById(id);
+        if(optionalPlayer.isPresent()){
+            return MapperDto.playerDTOfromPlayer(optionalPlayer.get());
         }else{
             log.error(BaseDescriptionException.NO_USER_BY_THIS_ID);
             throw new UserNotFoundException(BaseDescriptionException.NO_USER_BY_THIS_ID);
@@ -113,9 +119,10 @@ public class PlayerGamerService implements PlayerGameUsesCasesPort {
     }
 
     @Override
-    public List<Game> findGamesByPlayerId(int id){
+    public List<GameDto> findGamesByPlayerId(int id){
         if(playerRepository.existsById(id)){
             return gameRepository.findByPlayerId(id).stream()
+                    .map(MapperDto::gameDTOfromGame)
                     .collect(Collectors.toList());
         }else{
             log.error(BaseDescriptionException.NO_USER_BY_THIS_ID);
@@ -124,35 +131,36 @@ public class PlayerGamerService implements PlayerGameUsesCasesPort {
     }
 
     @Override
-    public Game saveGame(int playerId){
+    public GameDto saveGame(int playerId){
         Player player = playerRepository.findById(playerId).
                 orElseThrow(() -> new UserNotFoundException(BaseDescriptionException.NO_USER_BY_THIS_ID));
         int result = LogicGame.PLAY();
 
         Game savedGame = gameRepository.save(new Game(result, playerId));
         playerRepository.save(player.autoSetNewGamesRates(result));
-        return savedGame;
+        return MapperDto.gameDTOfromGame(savedGame);
     }
 
     @Override
-    public List<Game> deleteGamesByPlayerId(int id){
+    public List<GameDto> deleteGamesByPlayerId(int id){
         Player player = playerRepository.findById(id).
                 orElseThrow(() -> new UserNotFoundException());
 
         player.resetAllGamesRate();
         return gameRepository.deleteByPlayerId(id).stream()
+                .map(MapperDto::gameDTOfromGame)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public Player getWorstPlayer(){
-        List<Player> playersList = this.getAllPlayersRanking();
+    public PlayerGameDto getWorstPlayer(){
+        List<PlayerGameDto> playersList = this.getAllPlayersRanking();
         return playersList.get(playersList.size()-1);
     }
 
     @Override
-    public Player getBestPlayer(){
-        List<Player> playersList = this.getAllPlayersRanking();
+    public PlayerGameDto getBestPlayer(){
+        List<PlayerGameDto> playersList = this.getAllPlayersRanking();
         return playersList.get(0);
     }
 
@@ -160,7 +168,7 @@ public class PlayerGamerService implements PlayerGameUsesCasesPort {
     @Override
     public Double averageTotalMarks(){
         return this.getAllPlayers().stream()
-                .mapToDouble(Player::getAverageMark)
+                .mapToDouble(PlayerGameDto::getAverageMark)
                 .average().getAsDouble();
     }
 
