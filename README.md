@@ -6,7 +6,7 @@
   <img src="src/main/resources/images/mysql.png" width="100" />
 </p>
 
-## Spring Boot MySQL, Security, Thymeleaf
+## Spring Boot MySQL, Hexagonal, Security, Testing
 
 ### Description
 The dice game is played with two dice. If the result of the sum of the two dice is 7, the game is won, if not lost. A player can see a list of all the rolls he/she has made and the percentage of success.
@@ -21,8 +21,6 @@ The software must be able to list all the players in the system, the success per
 The software must respect the main design patterns.
 
 **URL's** 
-
-    MYSQL:    /players
 
     - POST:   /players                -> Create a player.
     - PUT     /players                -> change the name of the player.
@@ -48,18 +46,9 @@ By ID or ROLE:
 
 ```
 ### Swagger summary 
+- http://localhost:9005/swagger-ui/index.html
+
 ![Phot](src/main/resources/screenShotProject/swagger_summary.png)
-
-
-
-### References:
-- [Previous References](https://github.com/MiquelDebon/CI_05_02_01_DiceGame_SB_JWT_Testing)
-Validation
-- [Java email regex examples](https://mkyong.com/regular-expressions/how-to-validate-email-address-with-regular-expression/)
-- [Bezkoder - Spring Boot custom Validation example](https://www.bezkoder.com/spring-boot-custom-validation/)
-
-- [Transaction MongoDB - MySQL](https://www.youtube.com/watch?v=qOfdE-cFzto&t=245s)
-
 
 
 

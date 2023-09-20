@@ -1,4 +1,4 @@
-package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.request;
+package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.request;
 
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -24,6 +24,6 @@ public class RegisterRequest {
 
     @Size(min = 8, max = 100)
     @Pattern(   regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!*()]).{8,}$",
-                message = "Password: Minimum eight characters, at least one lower and upper case letter, one number, and one special character")
+                message = "Password: Minimum eight characters, at least one lower and upper case letter, and one special character")
     private String password;
 }

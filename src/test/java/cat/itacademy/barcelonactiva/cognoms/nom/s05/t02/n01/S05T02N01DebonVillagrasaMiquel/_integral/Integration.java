@@ -23,6 +23,14 @@ public class Integration {
     MockMvc mockMvc;
 
     /**
+     *********** USER ************
+     * {
+     *     "firstname" : "Miquel3",
+     *     "lastname" : "Villagrasa",
+     *     "email" : "mdebonbcn3@gmail.com",
+     *     "password" : "mdebonBCN+"
+     * }
+     *********** ADMIN ************
      * {
      *     "firstname" : "Silvia",
      *     "lastname" : "Garcia",

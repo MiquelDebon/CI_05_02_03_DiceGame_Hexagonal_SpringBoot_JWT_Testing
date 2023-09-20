@@ -1,12 +1,9 @@
 package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.rest.controller;
 
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Game;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Player;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.ExceptionHandler.BaseDescriptionException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.request.RegisterRequest;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.rest.mapperDto.MapperDto;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.response.GameDTO;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.response.PlayerGameDTO;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.ExceptionHandler.MessageException;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.request.RegisterRequest;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.dto.GameDto;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.dto.PlayerGameDto;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.services.PlayerGamerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,7 +22,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Tag(name = "IT-Academy", description = "Controller methods to deal with the Game")
@@ -35,7 +31,7 @@ public class DiceController {
     //http://localhost:9005/swagger-ui/index.html
 
     @Autowired
-    private PlayerGamerService PGService;
+    private PlayerGamerService service;
 
 
 
@@ -50,7 +46,7 @@ public class DiceController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDto.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "400",
@@ -58,7 +54,7 @@ public class DiceController {
                             content = @Content),
                     @ApiResponse(
                             responseCode = "403",
-                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            description = MessageException.E403_DESCRIPTION,
                             content = @Content
                     )
             },
@@ -67,10 +63,9 @@ public class DiceController {
     @PutMapping("/{id}")
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
     public ResponseEntity<?> updatePlayer(@PathVariable int id, @Valid @RequestBody RegisterRequest requestUpdatedUser){
-        Player updatedPlayer = PGService.updatePlayer(requestUpdatedUser, id);
+        PlayerGameDto updatedPlayer = service.updatePlayer(requestUpdatedUser, id);
 
-        PlayerGameDTO updatedDTO = MapperDto.playerDTOfromPlayer(updatedPlayer);
-        return new ResponseEntity<>(updatedDTO, HttpStatus.OK);
+        return new ResponseEntity<>(updatedPlayer, HttpStatus.OK);
     }
 
 
@@ -89,11 +84,11 @@ public class DiceController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = GameDTO.class),
+                            content = @Content(schema = @Schema(implementation = GameDto.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "404",
-                            description = BaseDescriptionException.NO_USER_BY_THIS_ID,
+                            description = MessageException.NO_USER_BY_THIS_ID,
                             content = @Content),
                     @ApiResponse(
                             responseCode = "400",
@@ -101,7 +96,7 @@ public class DiceController {
                             content = @Content),
                     @ApiResponse(
                             responseCode = "403",
-                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            description = MessageException.E403_DESCRIPTION,
                             content = @Content
                     )
             },
@@ -111,10 +106,8 @@ public class DiceController {
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
     //This Annotation allows only the authorised user to use this method or an Admin user
     public ResponseEntity<?> playGame(@PathVariable int id){
-        Game game = PGService.saveGame(id);
-
-        GameDTO gameDTO = MapperDto.gameDTOfromGame(game);
-        return new ResponseEntity<>(gameDTO, HttpStatus.OK);
+        GameDto game = service.saveGame(id);
+        return new ResponseEntity<>(game, HttpStatus.OK);
     }
 
 
@@ -129,15 +122,15 @@ public class DiceController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDto.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "204",
-                            description = BaseDescriptionException.EMPTY_DATABASE,
+                            description = MessageException.EMPTY_DATABASE,
                             content = @Content),
                     @ApiResponse(
                             responseCode = "403",
-                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            description = MessageException.E403_DESCRIPTION,
                             content = @Content
                     ),
                     @ApiResponse(
@@ -150,13 +143,8 @@ public class DiceController {
     @GetMapping()
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getAllPlayers(){
-        List<Player> returnList = PGService.getAllPlayers();
-
-        List<PlayerGameDTO> returnListDto = returnList.stream()
-                .map(MapperDto::playerDTOfromPlayer)
-                .collect(Collectors.toList());
-
-        return new ResponseEntity<>(returnListDto, HttpStatus.OK);
+        List<PlayerGameDto> playerList = service.getAllPlayers();
+        return new ResponseEntity<>(playerList, HttpStatus.OK);
     }
 
 
@@ -174,10 +162,10 @@ public class DiceController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = GameDTO.class), mediaType = "application/json")),
+                            content = @Content(schema = @Schema(implementation = GameDto.class), mediaType = "application/json")),
                     @ApiResponse(
                             responseCode = "404",
-                            description = BaseDescriptionException.NO_USER_BY_THIS_ID,
+                            description = MessageException.NO_USER_BY_THIS_ID,
                             content = @Content),
                     @ApiResponse(
                             responseCode = "400",
@@ -185,7 +173,7 @@ public class DiceController {
                             content = @Content),
                     @ApiResponse(
                             responseCode = "403",
-                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            description = MessageException.E403_DESCRIPTION,
                             content = @Content
                     )
             },
@@ -194,13 +182,8 @@ public class DiceController {
     @GetMapping("/{id}")
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
     public ResponseEntity<?> getGamePlayer(@PathVariable int id){
-        List<Game> returnList =  PGService.findGamesByPlayerId(id);
-
-        List<GameDTO> returnListDto = returnList.stream()
-                .map(MapperDto::gameDTOfromGame)
-                .collect(Collectors.toList());
-
-        return new ResponseEntity<>(returnListDto, HttpStatus.OK);
+        List<GameDto> gamesPlayer =  service.findGamesByPlayerId(id);
+        return new ResponseEntity<>(gamesPlayer, HttpStatus.OK);
     }
 
 
@@ -218,7 +201,7 @@ public class DiceController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDto.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "400",
@@ -226,7 +209,7 @@ public class DiceController {
                             content = @Content),
                     @ApiResponse(
                             responseCode = "403",
-                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            description = MessageException.E403_DESCRIPTION,
                             content = @Content
                     )
             },
@@ -235,11 +218,9 @@ public class DiceController {
     @DeleteMapping("/{id}/games")
     @PreAuthorize("#id == authentication.principal.id or hasAuthority('ADMIN')")
     public ResponseEntity<?> deletePlayerGames(@PathVariable int id){
-        PGService.deleteGamesByPlayerId(id);
-        Player player = PGService.findPlayerById(id);
-
-        PlayerGameDTO playerGameDTO = MapperDto.playerDTOfromPlayer(player);
-        return new ResponseEntity<>(playerGameDTO, HttpStatus.OK);
+        service.deleteGamesByPlayerId(id);
+        PlayerGameDto player = service.findPlayerById(id);
+        return new ResponseEntity<>(player, HttpStatus.OK);
     }
 
 
@@ -261,11 +242,11 @@ public class DiceController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDto.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "204",
-                            description = BaseDescriptionException.EMPTY_DATABASE,
+                            description = MessageException.EMPTY_DATABASE,
                             content = @Content),
                     @ApiResponse(
                             responseCode = "400",
@@ -273,12 +254,12 @@ public class DiceController {
                             content = @Content),
                     @ApiResponse(
                             responseCode = "403",
-                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            description = MessageException.E403_DESCRIPTION,
                             content = @Content
                     ),
                     @ApiResponse(
                             responseCode = "500",
-                            description = BaseDescriptionException.E500_INTERNAL_ERROR,
+                            description = MessageException.E500_INTERNAL_ERROR,
                             content = @Content)
             },
             security = {@SecurityRequirement(name = "Bearer Authentication")}
@@ -286,13 +267,8 @@ public class DiceController {
     @GetMapping("/ranking")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getRankingPlayers(){
-        List<Player> returnList = PGService.getAllPlayersRanking();
-
-        List<PlayerGameDTO> playerGameDTOS = returnList.stream()
-                .map(MapperDto::playerDTOfromPlayer)
-                .collect(Collectors.toList());
-
-        return new ResponseEntity<>(playerGameDTOS, HttpStatus.OK);
+        List<PlayerGameDto> rankingPlayers = service.getAllPlayersRanking();
+        return new ResponseEntity<>(rankingPlayers, HttpStatus.OK);
     }
 
 
@@ -307,20 +283,20 @@ public class DiceController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDto.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "404",
-                            description = BaseDescriptionException.EMPTY_DATABASE,
+                            description = MessageException.EMPTY_DATABASE,
                             content = @Content),
                     @ApiResponse(
                             responseCode = "403",
-                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            description = MessageException.E403_DESCRIPTION,
                             content = @Content
                     ),
                     @ApiResponse(
                             responseCode = "500",
-                            description = BaseDescriptionException.E500_INTERNAL_ERROR,
+                            description = MessageException.E500_INTERNAL_ERROR,
                             content = @Content)
             },
             security = {@SecurityRequirement(name = "Bearer Authentication")}
@@ -328,11 +304,8 @@ public class DiceController {
     @GetMapping("/ranking/loser")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getWorstPlayer(){
-        Player player = PGService.getWorstPlayer();
-
-        PlayerGameDTO playerGameDTO = MapperDto.playerDTOfromPlayer(player);
-
-        return new ResponseEntity<>(playerGameDTO, HttpStatus.OK);
+        PlayerGameDto worstPlayer = service.getWorstPlayer();
+        return new ResponseEntity<>(worstPlayer, HttpStatus.OK);
     }
 
 
@@ -347,20 +320,20 @@ public class DiceController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDto.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "404",
-                            description = BaseDescriptionException.EMPTY_DATABASE,
+                            description = MessageException.EMPTY_DATABASE,
                             content = @Content),
                     @ApiResponse(
                             responseCode = "403",
-                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            description = MessageException.E403_DESCRIPTION,
                             content = @Content
                     ),
                     @ApiResponse(
                             responseCode = "500",
-                            description = BaseDescriptionException.E500_INTERNAL_ERROR,
+                            description = MessageException.E500_INTERNAL_ERROR,
                             content = @Content)
             },
             security = {@SecurityRequirement(name = "Bearer Authentication")}
@@ -368,10 +341,8 @@ public class DiceController {
     @GetMapping("/ranking/winner")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> getBestPlayer(){
-        Player player =  PGService.getBestPlayer();
-
-        PlayerGameDTO playerGameDTO = MapperDto.playerDTOfromPlayer(player);
-        return new ResponseEntity<>(playerGameDTO, HttpStatus.OK);
+        PlayerGameDto bestPlayer =  service.getBestPlayer();
+        return new ResponseEntity<>(bestPlayer, HttpStatus.OK);
     }
 
     @Operation(
@@ -381,19 +352,19 @@ public class DiceController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Successful response",
-                            content = @Content(schema = @Schema(implementation = PlayerGameDTO.class),
+                            content = @Content(schema = @Schema(implementation = PlayerGameDto.class),
                                     mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "204",
-                            description = BaseDescriptionException.EMPTY_DATABASE,
+                            description = MessageException.EMPTY_DATABASE,
                             content = @Content),
                     @ApiResponse(
                             responseCode = "403",
-                            description = BaseDescriptionException.E403_DESCRIPTION,
+                            description = MessageException.E403_DESCRIPTION,
                             content = @Content),
                     @ApiResponse(
                             responseCode = "500",
-                            description = BaseDescriptionException.E500_INTERNAL_ERROR,
+                            description = MessageException.E500_INTERNAL_ERROR,
                             content = @Content)
             },
             security = {@SecurityRequirement(name = "Bearer Authentication")}
@@ -401,7 +372,7 @@ public class DiceController {
     @GetMapping("/totalAverageMark")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> getAverageTotalMark(){
-        Double averageMark = PGService.averageTotalMarks();
+        Double averageMark = service.averageTotalMarks();
         Double result = Math.round(averageMark * 100.00) / 100.00;
         return new ResponseEntity<>(result, HttpStatus.OK);
     }

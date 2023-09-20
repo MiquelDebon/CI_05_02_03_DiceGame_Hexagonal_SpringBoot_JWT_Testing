@@ -122,7 +122,7 @@ public class PlayerMySQL implements UserDetails {
 
 
     public Player toDomainModel(){
-        return new Player(id, name, surname, email, password, registerDate, amountOfGames, wonGames, averageMark, successRate, sumMark, role);
+        return new Player(id, name, surname, registerDate, email, password, amountOfGames, wonGames, averageMark, successRate, sumMark, role);
     }
     public static PlayerMySQL fromDomainModel(Player player){
         return PlayerMySQL.builder()

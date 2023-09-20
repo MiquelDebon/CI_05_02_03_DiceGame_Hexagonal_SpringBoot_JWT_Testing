@@ -1,9 +1,10 @@
 package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.controller.mysql;
 
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.dto.PlayerGameDto;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.rest.controller.AuthenticationController;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.response.AuthenticationResponse;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.request.LoginRequest;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.request.RegisterRequest;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.response.AuthenticationResponse;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.request.LoginRequest;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.request.RegisterRequest;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.security.AuthenticationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +40,7 @@ public class AuthenticationControllerSQLTest {
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;
     private AuthenticationResponse authenticationResponse;
+    private PlayerGameDto playerGameDto;
 
     @BeforeEach
     public void init(){
@@ -52,20 +54,24 @@ public class AuthenticationControllerSQLTest {
         loginRequest = LoginRequest.builder()
                 .email("miquel.debon@gmail.com")
                 .password("passwordD123+").build();
+        playerGameDto = PlayerGameDto.builder()
+                .name("miquel")
+                .averageMark(0)
+                .amountOfGames(0)
+                .successRate("0 %").build();
         authenticationResponse = AuthenticationResponse.builder()
                 .token("token").build();
     }
 
     @Test
     public void authController_registerUser_returnToken() throws Exception{
-        given(authServices.register(registerRequest)).willReturn(authenticationResponse);
+        given(authServices.register(registerRequest)).willReturn(playerGameDto);
 
         mockMvc.perform(post("/api/mysql/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new ObjectMapper().writeValueAsBytes(registerRequest)))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value(authenticationResponse.getToken()))
                 .andDo(MockMvcResultHandlers.print());
 
         verify(authServices, times(1)).register(registerRequest);

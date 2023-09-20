@@ -11,6 +11,4 @@ import java.util.Optional;
 public interface JpaPlayerRepositoryMySQL extends JpaRepository<PlayerMySQL, Integer> {
     boolean existsByEmail(String email);
     Optional<PlayerMySQL> findByEmail(String email);
-
-    UserDetails findByEmailAndPassword(String email, String password);
 }
