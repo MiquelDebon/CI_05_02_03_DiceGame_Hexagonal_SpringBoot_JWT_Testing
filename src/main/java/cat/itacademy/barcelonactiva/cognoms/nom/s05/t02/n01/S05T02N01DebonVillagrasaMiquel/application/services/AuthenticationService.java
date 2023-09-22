@@ -1,19 +1,14 @@
-package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.security;
+package cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.services;
 
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.services.PlayerGamerService;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.dto.PlayerGameDto;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.ports.in.AuthenticationPort;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.request.LoginRequest;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Player;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.ports.in.AuthenticationPort;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.ports.out.PlayerRepositoryPort;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.request.LoginRequest;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.response.AuthenticationResponse;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.request.RegisterRequest;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.customExceptions.DuplicateUserEmailException;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.customExceptions.DuplicateUserNameException;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.customExceptions.UserNotFoundException;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Role;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.entity.PlayerMySQL;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.repository.jpqMySql.JpaPlayerRepositoryMySQL;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,11 +22,11 @@ import java.text.SimpleDateFormat;
 @RequiredArgsConstructor
 public class AuthenticationService implements AuthenticationPort {
 
-    private final JpaPlayerRepositoryMySQL repository;
+    private final PlayerRepositoryPort repository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final PlayerGamerService service;
+    private final PlayerGameService service;
 
 
     @Override
@@ -40,7 +35,7 @@ public class AuthenticationService implements AuthenticationPort {
         service.checkDuplicatedName(request.getFirstname());
 
         //Just for fun if you register with an admin email you are an admin ROLE
-        PlayerMySQL player;
+        Player player;
         if(!request.getEmail().contains("@admin.com")){
             player = buildPlayer(request, Role.USER);
         }else{
@@ -73,8 +68,8 @@ public class AuthenticationService implements AuthenticationPort {
      * Support methods
      */
 
-    public PlayerMySQL buildPlayer(RegisterRequest request, Role role){
-        return PlayerMySQL.builder()
+    public Player buildPlayer(RegisterRequest request, Role role){
+        return Player.builder()
                 .name(request.getFirstname())
                 .surname(request.getLastname())
                 .email(request.getEmail())
@@ -85,7 +80,7 @@ public class AuthenticationService implements AuthenticationPort {
                 .build();
     }
 
-    private PlayerGameDto dtoFRomPlayer(PlayerMySQL player){
+    private PlayerGameDto dtoFRomPlayer(Player player){
         return PlayerGameDto.builder()
                 .name(player.getName())
                 .amountOfGames(player.getAmountOfGames())

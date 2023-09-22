@@ -23,14 +23,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class PlayerGamerService implements PlayerGameUsesCasesPort {
+public class PlayerGameService implements PlayerGameUsesCasesPort {
 
     private GameRepositoryPort gameRepository;
     private PlayerRepositoryPort playerRepository;
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    public PlayerGamerService(
+    public PlayerGameService(
             GameRepositoryPort gameRepository,
             PlayerRepositoryPort playerRepository,
             PasswordEncoder passwordEncoder) {
