@@ -10,7 +10,7 @@ import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillag
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.domain.model.Role;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.repository.jpaMongoDb.JpaGameRepositoryMongoDB;
 import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.infrastructure.repository.jpqMySql.JpaPlayerRepositoryMySQL;
-import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.services.PlayerGamerService;
+import cat.itacademy.barcelonactiva.cognoms.nom.s05.t02.n01.S05T02N01DebonVillagrasaMiquel.application.services.PlayerGameService;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,10 +32,10 @@ import static org.mockito.Mockito.never;
 @Slf4j
 @DisplayName("Service test")
 @ExtendWith(MockitoExtension.class)
-public class ServiceSQLTest {
+public class PlayerGameServiceTest {
 
     @InjectMocks
-    private PlayerGamerService underTestService;
+    private PlayerGameService underTestService;
     @Mock private JpaPlayerRepositoryMySQL playerRepository;
     @Mock private JpaGameRepositoryMongoDB gameRepository;
     @Mock private PasswordEncoder passwordEncoder;

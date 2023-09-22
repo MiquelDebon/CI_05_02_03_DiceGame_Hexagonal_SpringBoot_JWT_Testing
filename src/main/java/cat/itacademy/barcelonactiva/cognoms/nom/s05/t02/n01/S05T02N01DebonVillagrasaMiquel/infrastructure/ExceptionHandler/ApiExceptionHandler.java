@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -39,6 +40,13 @@ public class ApiExceptionHandler {
         Map<String, String> mapError = new HashMap<>();
         mapError.put("ErrorMessage", ex.getMessage());
         return new ResponseEntity<>(mapError, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<?> duplicatedName(AccessDeniedException ex){
+        Map<String, String> mapError = new HashMap<>();
+        mapError.put("ErrorMessage", ex.getMessage());
+        return new ResponseEntity<>(mapError, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(DuplicateUserEmailException.class)
